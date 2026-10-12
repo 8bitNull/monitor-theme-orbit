@@ -64,3 +64,7 @@ Orbit 基于本项目原 DStatus 风格主题继续开发，界面设计参考 [
 3D 地球由 globe.gl 与 Three.js 提供，图标使用 Tabler Icons，国旗使用 country-flag-icons；各依赖沿用其自身许可证。地球纹理来源于 NASA Blue Marble（公有领域）。
 
 已有外观和浏览偏好保留原存储键，安装标识及配置接口使用 `orbit`。
+
+## 许可证
+
+本主题代码以 [MIT](LICENSE) 许可证发布，保留上游项目的版权声明。第三方依赖和 NASA 地球纹理沿用上述各自的许可证。
