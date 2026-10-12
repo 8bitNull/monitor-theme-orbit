@@ -1,0 +1,65 @@
+{
+  "name": "Orbit",
+  "short": "orbit",
+  "description": "让每个节点，尽在视野。极简探针主题：实时状态、全球节点、网络质量与亮暗外观。",
+  "version": "1.1.8",
+  "author": "monitor-theme-orbit",
+  "url": "",
+  "config": [
+    {
+      "type": "title",
+      "label": "布局"
+    },
+    {
+      "key": "show_region",
+      "type": "boolean",
+      "label": "显示地区卡",
+      "default": true,
+      "help": "节点列表上方的地区标签行与 3D 地球"
+    },
+    {
+      "key": "show_network",
+      "type": "boolean",
+      "label": "显示网络情况卡",
+      "default": true,
+      "help": "右上方的全网实时速率与累计流量"
+    },
+    {
+      "key": "show_expiring",
+      "type": "boolean",
+      "label": "显示到期筛选",
+      "default": true,
+      "help": "更多筛选中的到期筛选按钮"
+    },
+    {
+      "type": "title",
+      "label": "网络"
+    },
+    {
+      "key": "capacity_mbps",
+      "type": "number",
+      "label": "网络情况卡满刻度",
+      "default": 1000,
+      "min": 1,
+      "help": "实时速率进度条的满刻度，单位 Mbps，默认 1000 即 1G"
+    },
+    {
+      "type": "title",
+      "label": "页脚"
+    },
+    {
+      "key": "footer_text",
+      "type": "string",
+      "label": "页脚文案",
+      "default": "",
+      "help": "留空显示默认文案"
+    },
+    {
+      "key": "footer_url",
+      "type": "string",
+      "label": "页脚链接",
+      "default": "",
+      "help": "留空则不带链接"
+    }
+  ]
+}

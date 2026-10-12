@@ -1,0 +1,60 @@
+import { test, expect } from '@playwright/test'
+const history = {metrics:[], probes:{'1':'Successful probe','2':'Timeout probe','3':'Configured empty'},loss:{'2':100},ping:[{task_id:2,ts:120,latency:null,loss:100},{task_id:1,ts:60,latency:40},{task_id:1,ts:120,latency:60}]}
+test.beforeEach(async ({page}) => {
+ await page.route('**/api/nodes/*/metrics?*', route => route.fulfill({json:history}))
+})
+test('network statistics explain scope and actual window loss', async ({page}) => {
+ await page.goto('/network-quality')
+ await expect(page.getByText('监测组合数',{exact:true})).toBeVisible()
+ await expect(page.getByText('目标平均成功率',{exact:true})).toBeVisible()
+ await expect(page.getByText('健康度',{exact:true})).toHaveCount(0)
+ await expect(page.locator('a[href^="/stats/1/?tab=quality"]').filter({hasText:'目标平均丢包率'})).toContainText('50.0')
+})
+test('node quality retains timeout and configured unsampled targets', async ({page}) => {
+ await page.goto('/stats/1/')
+ await page.getByRole('tab',{name:'网络质量',exact:true}).click()
+ const timeout=page.getByRole('button').filter({hasText:'Timeout probe'})
+ await expect(timeout).toContainText('100.0%')
+ await expect(timeout.locator('[title="全部超时（丢包 100%）"]')).toHaveCount(1)
+ await expect(page.getByRole('button').filter({hasText:'Successful probe'})).toContainText('0.0%')
+ await expect(page.getByRole('button').filter({hasText:'Configured empty'})).toContainText('暂无样本')
+ await page.getByRole('button',{name:'7d',exact:true}).click()
+ await expect(page.getByText('7d',{exact:true})).toHaveCount(2)
+})
+test('success gives each sampled target equal weight and follows node search', async ({page}) => {
+ await page.route('**/api/nodes', async route => {
+  const response=await route.fetch(); const body=await response.json()
+  body.nodes=body.nodes.slice(0,2).map((node: Record<string,unknown>,i:number)=>({...node,name:`Synthetic node ${i+1}`}))
+  await route.fulfill({json:body})
+ })
+ await page.route('**/api/nodes/2/metrics?*', route => route.fulfill({json:{metrics:[],probes:{'1':'One'},loss:{},ping:[{task_id:1,ts:120,latency:10}]}}))
+ await page.goto('/network-quality')
+ const success=page.getByText('目标平均成功率',{exact:true}).locator('..')
+ await expect(success).toContainText('66.7%')
+ await page.getByRole('textbox',{name:'搜索节点名称',exact:true}).fill('Synthetic node 2')
+ await expect(success).toContainText('100.0%')
+ await expect(page.getByText('监测组合数',{exact:true}).locator('..')).toContainText('1')
+})
+test('legacy bucket estimates remain disclosed in global statistics and both layouts', async ({page}) => {
+ await page.route('**/api/nodes', async route => {
+  const response=await route.fetch(); const body=await response.json()
+  body.nodes=body.nodes.slice(0,2).map((node: Record<string,unknown>,i:number)=>({...node,name:`Synthetic node ${i+1}`}))
+  await route.fulfill({json:body})
+ })
+ const {loss: discarded,...legacy}=history
+ void discarded
+ await page.route('**/api/nodes/1/metrics?*', route => route.fulfill({json:legacy}))
+ await page.goto('/network-quality')
+ const success=page.getByText('目标平均成功率',{exact:true}).locator('..')
+ await expect(success).toContainText('估算')
+ const classic=page.locator('a[href^="/stats/1/?tab=quality"]').filter({hasText:'目标平均丢包率'})
+ await expect(classic).toContainText('桶均值估算')
+ await page.locator('summary').filter({hasText:'更多筛选'}).click()
+ await page.getByRole('button').filter({hasText:'探索视图'}).click()
+ const row=page.locator('main a[href^="/stats/1/?tab=quality"]')
+ await expect(row).toContainText('目标平均丢包率')
+ await expect(row).toContainText('桶均值估算')
+ await expect(success).toContainText('估算')
+ await page.getByRole('textbox',{name:'搜索节点名称',exact:true}).fill('Synthetic node 2')
+ await expect(success).not.toContainText('估算')
+})

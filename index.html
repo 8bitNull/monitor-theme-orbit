@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <link rel="icon" href="/favicon.svg" />
+    <title>Orbit</title>
+    <script>
+      // 首帧前定下外观，避免亮暗闪跳。键名与内置面板共享同一份约定。
+      (function () {
+        var saved, accent, glass;
+        try { saved = localStorage.getItem("theme"); } catch (e) {}
+        try { accent = localStorage.getItem("dstatus-accent"); } catch (e) {}
+        try { glass = localStorage.getItem("dstatus-glass"); } catch (e) {}
+        var mode = saved === "light" || saved === "dark" ? saved : "system";
+        var dark = mode === "dark" || (mode === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.classList.toggle("dark", dark);
+        var ids = ["vercel-black", "graphite-gray", "classic-blue-black", "warm-black", "cool-black"];
+        document.documentElement.setAttribute("data-preset", ids.indexOf(accent) >= 0 ? accent : "vercel-black");
+        if (glass === "on") document.documentElement.setAttribute("data-glass", "on");
+        document.documentElement.classList.add("theme-initialized");
+      })()
+    </script>
+    <script>
+      // Start identity during HTML parsing; node data still waits for authorization.
+      (function () {
+        var controller = new AbortController();
+        var early = {
+          controller: controller,
+          startedAt: performance.now(),
+          request: fetch("/api/me", { credentials: "same-origin", cache: "no-store", signal: controller.signal }).catch(function () { return null; }),
+          abandon: function () {
+            controller.abort();
+            if (window.__dstatusIdentity === early) delete window.__dstatusIdentity;
+          }
+        };
+        window.__dstatusIdentity = early;
+        window.addEventListener("pagehide", early.abandon, { once: true });
+      })();
+    </script>
+    <style>
+      #boot-shell { --boot-card:#fff; --boot-bg:#f8fafc; position:fixed; inset:0; padding:24px; box-sizing:border-box; background:var(--boot-bg); color:#475569; font:16px system-ui,sans-serif }
+      .dark #boot-shell { --boot-bg:#000; --boot-card:#0a0a0a; color:#d4d4d4 }
+      [data-preset="graphite-gray"] #boot-shell { --boot-bg:#f4f4f5 }
+      [data-preset="warm-black"] #boot-shell { --boot-bg:#faf7f2 }
+      [data-preset="cool-black"] #boot-shell { --boot-bg:#f3f8fb }
+      .dark[data-preset] #boot-shell { --boot-bg:#000 }
+      .dark[data-preset="graphite-gray"] #boot-shell { --boot-card:#171717 }
+      .dark[data-preset="classic-blue-black"] #boot-shell { --boot-card:#0f172a }
+      .dark[data-preset="warm-black"] #boot-shell { --boot-card:#1a1210 }
+      .dark[data-preset="cool-black"] #boot-shell { --boot-card:#0b1820 }
+      #boot-shell > div { background:var(--boot-card); border:1px solid #8883; border-radius:12px; margin-bottom:20px }
+      .boot-nav { height:44px } .boot-summary { height:80px } .boot-card { height:180px; max-width:360px }
+    </style>
+  </head>
+  <body>
+    <div id="boot-shell" data-testid="boot-skeleton" role="status" aria-label="正在加载状态页">
+      <div class="boot-nav" aria-hidden="true"></div><div class="boot-summary" aria-hidden="true"></div>
+      <p>正在加载状态页…</p><div class="boot-card" aria-hidden="true"></div>
+      <noscript><p>请启用 JavaScript 以查看状态数据。</p></noscript>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
